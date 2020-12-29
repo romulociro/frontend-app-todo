@@ -1,4 +1,4 @@
-<h1 align="center">App ToDo - Tarefas</h1>
+<h1 align="center">FrontEnd App ToDo - Tarefas</h1>
 <p align="center">App para organizar as tarefas do dia a dia</p>
 <p align="center">
  <a href="#objetivo">Objetivo</a> •
