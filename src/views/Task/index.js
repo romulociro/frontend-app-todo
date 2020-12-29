@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Redirect } from 'react-router-dom';
 import { format } from 'date-fns';
 import * as S from './styles';
 
@@ -9,6 +10,7 @@ import Footer from '../../components/Footer';
 import TypeIcons from '../../utils/typeicons';
 
 function Task({ match }) {
+  const [redirect, setRedirect] = useState(false);
   const [lateCount, setLateCount] = useState();
   const [type, setType] = useState();
   const [done, setDone] = useState(false);
@@ -27,6 +29,7 @@ function Task({ match }) {
   async function LoadTaskDetails() {
     await api.get(`/task/${match.params.id}`).then((response) => {
       setType(response.data.type);
+      setDone(response.data.done);
       setTitle(response.data.title);
       setDescription(response.data.description);
       setTitle(response.data.title);
@@ -36,13 +39,46 @@ function Task({ match }) {
   }
 
   async function Save() {
-    await api.post('/task', {
-      macaddress,
-      type,
-      title,
-      description,
-      when: `${date}T${hour}:00.000`,
-    });
+    // Validação
+    if (!title) return alert('Você precisa informar o título da tarefa');
+    if (!description)
+      return alert('Você precisa informar a descrição da tarefa');
+    if (!type) return alert('Você precisa selecionar o tipo de tarefa');
+    if (!date) return alert('Você precisa definir a data');
+    if (!hour) return alert('Você precisa definir a hora');
+
+    if (match.params.id) {
+      await api
+        .put(`/task/${match.params.id}`, {
+          macaddress,
+          done,
+          type,
+          title,
+          description,
+          when: `${date}T${hour}:00.000`,
+        })
+        .then(() => setRedirect(true));
+    } else {
+      await api
+        .post('/task', {
+          macaddress,
+          type,
+          title,
+          description,
+          when: `${date}T${hour}:00.000`,
+        })
+        .then(() => setRedirect(true));
+    }
+  }
+
+  async function Remove() {
+    // eslint-disable-next-line no-restricted-globals
+    const res = confirm('Deseja realmente remover a tarefa?');
+    if (res === true) {
+      await api
+        .delete(`/task/${match.params.id}`)
+        .then(() => setRedirect(true));
+    }
   }
 
   useEffect(() => {
@@ -52,7 +88,9 @@ function Task({ match }) {
 
   return (
     <S.Container>
-      <Header lateCount={lateCount} clickNotification={Notification} />
+      {redirect && <Redirect to="/" />}
+
+      <Header lateCount={lateCount} />
 
       <S.Form>
         <S.TypeIcons>
@@ -119,7 +157,11 @@ function Task({ match }) {
             />
             <span>CONCLUÍDO</span>
           </div>
-          <button type="button">EXCLUIR</button>
+          {match.params.id && (
+            <button type="button" onClick={Remove}>
+              EXCLUIR
+            </button>
+          )}
         </S.Options>
 
         <S.Save>
